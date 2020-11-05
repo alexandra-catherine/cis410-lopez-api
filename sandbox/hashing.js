@@ -1,6 +1,8 @@
 const bcrypt = require('bcryptjs')
 
-var hashedPassword = bcrypt.hashSync('asdfasdf')
+//var hashedPassword = bcrypt.hashSync('asdfasdf')
+var hashedPassword = bcrypt.hashSync("asdfasdf")
+
 
 console.log(hashedPassword)
 
