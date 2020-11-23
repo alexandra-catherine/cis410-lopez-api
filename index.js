@@ -18,7 +18,7 @@ app.post("/contacts/logout", auth, (req,res)=>{
     `
 
     db.executeQuery(query)
-    .then(()=>{res.status(200).send()})
+    .then(()=>{res.status(200).send("you have logged out")})
     .catch((error)=>{
         console.log("error in POST /contacts/logout", error)
         res.status(500).send()
@@ -26,15 +26,35 @@ app.post("/contacts/logout", auth, (req,res)=>{
 })
 
 
-// app.get("/workouts/me", auth, async (req, res)=> {
-//     let clientPK = req.client.ClientID;
 
-// })
 
-// app.patch("/workouts/:pk", auth, async(req, res)=>{
-//     let workoutPK = req.params.pk
-//     //make sure that user can only edit their own workouts 
-// })
+app.get("/workouts/me", auth, async (req, res)=> {
+   try{ 
+
+    //this just returns the client ID not their other information 
+    let clientID = req.client.ClientID;
+    console.log("This is working")
+
+    var myWorkouts = 
+    `SELECT *
+    FROM WorkoutTBL  
+    WHERE WorkoutTBL.ClientID  = ${clientID}`
+
+    let allWorkouts= await db.executeQuery(myWorkouts)
+    console.log(allWorkouts)
+     res.status(200).send(allWorkouts)}
+     catch(error){
+         console.log("error in POST /workouts/me", error)
+         res.status(500).send() }
+     
+
+})
+
+//this doesnt work either
+//app.patch("/workouts/:pk", auth, async(req, res)=>{
+   //  let workoutPK = req.params.pk
+     //make sure that user can only edit their own workouts 
+ //})
 
 // app.delete("/workouts/:pk", auth, async(req, res)=>{
 //     let workoutPK = req.params.pk
@@ -52,22 +72,23 @@ app.get("/hi",(req,res)=>{
 
 app.post("/workouts", auth, async (req,res)=>{
     try{
-    var workoutID = req.body.workoutID;
+   
     var activeTime = req.body.activeTime;
     var activeCalories = req.body.activeCalories;
     var averageBPM = req.body.averageBPM;
     var activeDistance = req.body.activeDistance;
 
-   if(!workoutID|| !activeTime|| !activeCalories|| !activeDistance|| !averageBPM|| !activeDistance){res.status(400).send("bad request")}
+   if( !activeTime|| !activeCalories|| !activeDistance|| !averageBPM|| !activeDistance){res.status(400).send("bad request")}
 
    
   console.log("here is the contact in /workouts", req.client)
-  res.send("here is your response")
+  //res.send("here is your response")
 
-    let insertQuery= `INSERT INTO WorkoutTBL(ActiveTime, ActiveCalories, AverageBPM, ActiveDistance, ClientID, WorkoutID)
+    let insertQuery= `INSERT INTO WorkoutTBL(ActiveTime, ActiveCalories, AverageBPM, ActiveDistance, ClientID)
     OUTPUT inserted.WorkoutID, inserted.ActiveTime, inserted.AverageBPM, inserted.ActiveDistance, inserted.ActiveCalories, inserted.ClientID
-    VALUES (${activeTime}, ${activeCalories}, ${averageBPM}, ${activeDistance}, ${req.client.ClientID}, ${workoutID})`
+    VALUES (${activeTime}, ${activeCalories}, ${averageBPM}, ${activeDistance}, ${req.client.ClientID})`
 
+    console.log("here is my query: ", insertQuery)
     let insertedWorkout= await db.executeQuery(insertQuery)
     console.log(insertedWorkout)
     res.status(201).send(insertedWorkout[0])   
@@ -75,12 +96,13 @@ app.post("/workouts", auth, async (req,res)=>{
 
     catch(error){
         console.log("error in POST /review", error);
-        req.status(500).send()
+        res.status(500).send()
     }
 })
 
 app.get("/contacts/me", auth, (req, res)=>{
     res.send(req.contact)
+    
 })
 
 
@@ -191,42 +213,42 @@ app.post("/contacts/login", async (req,res)=>{
 
 
 
-app.get("/clients", (req,res)=>{
-    //get data from db
-    db.executeQuery(`SELECT*From WorkoutTBL
-    Left Join ClientTBL
-    on  WorkoutTBL.ClientID = ClientTBL.ClientID `)
-    .then((result)=> {
-        res.status(200).send(result)
-    }) 
-    .catch((err)=>{
-        console.log(err);
-        res.status(500).send()
-    })
-})
-app.get("/clients/:pk", (req,res)=>{
-    var pk= req.params.pk
-    //console.log("my pk: ", pk) 
-    var myQuery= `SELECT*From WorkoutTBL
-    Left Join ClientTBL
-    on  WorkoutTBL.ClientID = ClientTBL.ClientID 
-    Where ClientTBL.ClientID =  ${pk}`
 
-    db.executeQuery(myQuery)
-        .then((client) => {
-            //console.log("Client: " + client)
-            if(client[0]){
-                res.send(client[0])
-            }
-            else{
-                res.status(404).send('bad request')
-            }
-        })
-        .catch((err)=>{
-            console.log("error in clients/pk", err)
-            res.status(500).send()
-        })
-})
+app.get("/workoutType", (req,res)=>{
+        //get data from db
+         db.executeQuery(`SELECT*From WorkoutTypeTBL
+          `)
+        .then((result)=> {
+             res.status(200).send(result)
+           }) 
+         .catch((err)=>{
+             console.log(err);
+             res.status(500).send()
+         })
+     })
+
+     app.get("/workoutType/:pk", (req,res)=>{
+           var pk= req.params.pk
+             //console.log("my pk: ", pk) 
+           var myQuery= `SELECT*From WorkoutTypeTBL
+             
+             Where WorkoutTypeTBL.WorkoutTypeID =  ${pk}`
+        
+             db.executeQuery(myQuery)
+                .then((workoutType) => {
+                     //console.log("Workout Type: " + workoutType)
+                     if(workoutType[0]){
+                         res.send(workoutType[0])
+                     }
+                     else{
+                         res.status(404).send('bad request')
+                     }
+                 })
+                 .catch((err)=>{
+                     console.log("error in workoutType/pk", err)
+                     res.status(500).send()
+                 })
+         })     
 
 
 const PORT = process.env.PORT || 5000
